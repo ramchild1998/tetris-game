@@ -1,8 +1,61 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { BOARD_WIDTH, BOARD_HEIGHT, TETROMINOS } from './constants';
 import type { Board, Player, TetrominoKey } from './types';
+import { SOUNDS } from './sounds';
 
 const createBoard = (): Board => Array.from({ length: BOARD_HEIGHT }, () => Array(BOARD_WIDTH).fill('0'));
+
+// Custom hook to handle sound effects using pre-recorded audio data
+const useSounds = () => {
+    const audioCtxRef = useRef<AudioContext | null>(null);
+    const audioBuffersRef = useRef<Record<string, AudioBuffer>>({});
+    const isInitialized = useRef(false);
+
+    // Function to initialize AudioContext and decode audio data
+    const initializeAudio = useCallback(async () => {
+        if (isInitialized.current || !window.AudioContext) return;
+        
+        try {
+            const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+            audioCtxRef.current = audioCtx;
+
+            const soundPromises = Object.entries(SOUNDS).map(async ([key, base64]) => {
+                const response = await fetch(base64);
+                const arrayBuffer = await response.arrayBuffer();
+                const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+                return { key, audioBuffer };
+            });
+
+            const decodedSounds = await Promise.all(soundPromises);
+            decodedSounds.forEach(({ key, audioBuffer }) => {
+                audioBuffersRef.current[key] = audioBuffer;
+            });
+
+            isInitialized.current = true;
+        } catch (e) {
+            console.error("Failed to initialize or decode audio:", e);
+        }
+    }, []);
+
+    const playSound = useCallback((type: keyof typeof SOUNDS) => {
+        const audioCtx = audioCtxRef.current;
+        const audioBuffer = audioBuffersRef.current[type];
+
+        if (!audioCtx || !audioBuffer) return;
+
+        try {
+            const source = audioCtx.createBufferSource();
+            source.buffer = audioBuffer;
+            source.connect(audioCtx.destination);
+            source.start(0);
+        } catch (e) {
+            console.error(`Failed to play sound: ${type}`, e);
+        }
+    }, []);
+
+    return { initializeAudio, playSound };
+};
+
 
 const App: React.FC = () => {
     const [board, setBoard] = useState<Board>(createBoard());
@@ -17,6 +70,8 @@ const App: React.FC = () => {
     const [level, setLevel] = useState(0);
     const [gameOver, setGameOver] = useState(false);
     const [isPlaying, setIsPlaying] = useState(false);
+    
+    const { initializeAudio, playSound } = useSounds();
 
     const gameAreaRef = useRef<HTMLDivElement>(null);
     const dropTime = 1000 / (level + 1) + 200;
@@ -59,12 +114,14 @@ const App: React.FC = () => {
         if (checkCollision(newPlayer, board, { x: 0, y: 0 })) {
             setGameOver(true);
             setIsPlaying(false);
+            playSound('gameOver');
         } else {
             setPlayer(newPlayer);
         }
-    }, [board, checkCollision, randomTetromino]);
+    }, [board, checkCollision, randomTetromino, playSound]);
     
     const startGame = useCallback(() => {
+        initializeAudio();
         setBoard(createBoard());
         setScore(0);
         setRows(0);
@@ -73,7 +130,7 @@ const App: React.FC = () => {
         setIsPlaying(true);
         resetPlayer();
         gameAreaRef.current?.focus();
-    }, [resetPlayer]);
+    }, [resetPlayer, initializeAudio]);
 
     const updatePlayerPos = ({ x, y, collided }: { x: number, y: number, collided: boolean }): void => {
         setPlayer(prev => ({
@@ -86,8 +143,9 @@ const App: React.FC = () => {
     const movePlayer = useCallback((dir: -1 | 1) => {
         if (!checkCollision(player, board, { x: dir, y: 0 })) {
             updatePlayerPos({ x: dir, y: 0, collided: false });
+            playSound('move');
         }
-    }, [board, checkCollision, player]);
+    }, [board, checkCollision, player, playSound]);
 
     const drop = useCallback(() => {
         if (!checkCollision(player, board, { x: 0, y: 1 })) {
@@ -96,55 +154,55 @@ const App: React.FC = () => {
             if (player.pos.y < 1) {
                 setGameOver(true);
                 setIsPlaying(false);
+                playSound('gameOver');
                 return;
             }
             updatePlayerPos({ x: 0, y: 0, collided: true });
         }
-    }, [board, checkCollision, player]);
+    }, [board, checkCollision, player, playSound]);
 
     const rotatePlayer = useCallback(() => {
         const clonedPlayer = JSON.parse(JSON.stringify(player));
         const { tetromino } = clonedPlayer;
         
-        // Transpose
         const rotatedTetromino = tetromino.map((_: any, index: number) => 
             tetromino.map((col: any[]) => col[index])
-        );
-        // Reverse each row to get a clockwise rotation
-        rotatedTetromino.forEach((row: any[]) => row.reverse());
+        ).reverse();
         
         clonedPlayer.tetromino = rotatedTetromino;
         
+        let kick = 0;
         if (!checkCollision(clonedPlayer, board, { x: 0, y: 0 })) {
-            setPlayer(clonedPlayer);
-        } else {
-            // Wall kick (simple version)
-            let kick = 1;
-            if (!checkCollision(clonedPlayer, board, { x: kick, y: 0 })) {
-                clonedPlayer.pos.x += kick;
-                setPlayer(clonedPlayer);
-                return;
-            }
+            // No collision
+        } else if (!checkCollision(clonedPlayer, board, { x: 1, y: 0 })) {
+            kick = 1;
+        } else if (!checkCollision(clonedPlayer, board, { x: -1, y: 0 })) {
             kick = -1;
-             if (!checkCollision(clonedPlayer, board, { x: kick, y: 0 })) {
-                clonedPlayer.pos.x += kick;
-                setPlayer(clonedPlayer);
-                return;
-            }
+        } else if (!checkCollision(clonedPlayer, board, { x: 2, y: 0 })) {
+            kick = 2;
+        } else if (!checkCollision(clonedPlayer, board, { x: -2, y: 0 })) {
+            kick = -2;
+        } else {
+            return; // Can't rotate
         }
+        
+        clonedPlayer.pos.x += kick;
+        setPlayer(clonedPlayer);
+        playSound('rotate');
 
-    }, [board, checkCollision, player]);
+    }, [board, checkCollision, player, playSound]);
 
     const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
         if (!isPlaying || gameOver) return;
         if (e.key === 'ArrowLeft') movePlayer(-1);
         else if (e.key === 'ArrowRight') movePlayer(1);
         else if (e.key === 'ArrowDown') drop();
-        else if (e.key === 'ArrowUp') rotatePlayer();
+        else if (e.key === 'ArrowUp' || e.key === 'x') rotatePlayer();
     }, [drop, gameOver, isPlaying, movePlayer, rotatePlayer]);
 
     useEffect(() => {
         if (player.collided) {
+            playSound('drop');
             const newBoard = board.map(row => row.slice());
             player.tetromino.forEach((row, y) => {
                 row.forEach((value, x) => {
@@ -154,7 +212,6 @@ const App: React.FC = () => {
                 });
             });
 
-            // Check for cleared rows
             let rowsCleared = 0;
             const sweptBoard = newBoard.reduce((ack, row) => {
                 if (row.every(cell => cell !== '0')) {
@@ -167,19 +224,28 @@ const App: React.FC = () => {
             }, [] as Board);
             
             if (rowsCleared > 0) {
+                if (rowsCleared === 4) {
+                    playSound('tetris');
+                } else {
+                    playSound('clear');
+                }
                 const linePoints = [0, 40, 100, 300, 1200];
                 setScore(prev => prev + linePoints[rowsCleared] * (level + 1));
-                setRows(prev => {
-                    const newTotalRows = prev + rowsCleared;
-                    setLevel(Math.floor(newTotalRows / 10));
-                    return newTotalRows;
-                });
+                
+                const newTotalRows = rows + rowsCleared;
+                const newLevel = Math.floor(newTotalRows / 10);
+                if (newLevel > level) {
+                    playSound('levelUp');
+                }
+                setRows(newTotalRows);
+                setLevel(newLevel);
             }
             
             setBoard(sweptBoard);
             resetPlayer();
         }
-    }, [player, board, resetPlayer, level]);
+    }, [player.collided, board, resetPlayer, level, playSound, player.pos, player.shape, player.tetromino, rows]);
+
 
     useEffect(() => {
         let interval: number | undefined;
@@ -197,7 +263,6 @@ const App: React.FC = () => {
     const renderedBoard = board.map((row, y) =>
       row.map((cell, x) => {
         let color = TETROMINOS[cell].color;
-        // Draw player piece on top of the board
         player.tetromino.forEach((pRow, pY) => {
           pRow.forEach((pValue, pX) => {
             if (pValue !== 0 && y === player.pos.y + pY && x === player.pos.x + pX) {

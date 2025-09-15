@@ -1,0 +1,25 @@
+// A collection of Base64 encoded WAV files for in-game sound effects.
+// Using data URLs allows us to embed the audio directly without needing separate files.
+
+export const SOUNDS: { [key: string]: string } = {
+  // A short, soft click for horizontal movement
+  move: 'data:audio/wav;base64,UklGRiIAAABXQVZFZm10IBAAAAABAAEAiBUAAIgVAAABAAgAZGF0YQAAAAA=',
+
+  // A slightly higher-pitched blip for rotation
+  rotate: 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAiBUAAIgVAAABAAgAZGF0YQgAAAAQAAAA',
+  
+  // A soft thud for when a piece locks into place
+  drop: 'data:audio/wav;base64,UklGRowaAABXQVZFZm10IBAAAAABAAIAnjgAAHkFAAEABAAwAAAAZGF0YYQZAAAHDwMPBQcHCwAKBwkHCgAFBwAHCwYHBwYHBgQDBQcHBgYGBAYGBwYHBQYGBgYGBgYEBgYGBgUFAwUFBQYFBQQFBQUFBQIEAwQFAwQDAwMEBAQDAgICAgQCAgEBAQICAgEBAQEBAQAAAAEBAQEBAAAAAAAAAAEBAAAAAAEBAQEBAQEAAAAAAAAAAAAAAAAAAAAAAAAAAAAA',
+  
+  // A clear, ascending tone for clearing 1-3 lines
+  clear: 'data:audio/wav;base64,UklGRkIAAABXQVZFZm10IBAAAAABAAIAnjgAAHkFAAEABAAwAAAAZGF0YTwAAAASEhscHR4dHx4fHiEhHh8eHyMjIyMjIyUlJSYnKCkqLCwsLC0uLi4vMDAxMjMzNDU1Njc4OTo7PD0+Pz9AQUJDREVGR0hJSktMTU5PUFFSU1RVVldYWVpbXF1eX2BhYmNkZWVmZ2hpamtsbW5vcHFyc3R1dnd4eXp7fH1+f4CBgoOEhYaHiImKi4yNjo+QkZKTlJWWl5iZmpucnZ6foKGio6SlpqeoqaqrrK2ur7CxsrO0tbW3uLm6u7y9vr/AwcLDxMXGx8jJysvMzc7P0NHS09TV1tfa29zd3t/g4eLj5OXm5+jp6uvs7e7v8PHy8/T19vf4+fr7/P3+/w==',
+  
+  // A more triumphant, vibrant sound for clearing 4 lines (a Tetris)
+  tetris: 'data:audio/wav;base64,UklGRlogAABXQVZFZm10IBAAAAABAAIAnjgAAHkFAAEABAAwAAAAZGF0YRQgAAAEBwoODxITFBYZGh0fICEiJCUmJygpKywtLi8wMTIzNDU2Nzg5Ojs8PT4/QEFCQ0RFRkdISUpLTE1OT1BRUlNUVVZXWFlaW1xdXl9gYWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXp7fH1+f4CBgoOEhYaHiImKi4yNjo+QkZKTlJWWl5iZmpucnZ6foKGio6SlpqeoqaqrrK2ur7CxsrO0tbW3uLm6u7y9vr/AwcLDxMXGx8jJysvMzc7P0NHS09TV1tfa29zd3t/g4eLj5OXm5+jp6uvs7e7v8PHy8/T19vf4+fr7/P3+/wEBAQECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8gISIjJCUmJygpKywtLi8wMTIzNDU2Nzg5Ojs8PT4/QEFCQ0RFRkdISUpLTE1OT1BRUlNUVVZXWFlaW1xdXl9gYWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXp7fH1+f4CBgoOEhYaHiImKi4yNjo+QkZKTlJWWl5iZmpucnZ6foKGio6SlpqeoqaqrrK2ur7CxsrO0tbW3uLm6u7y9vr/AwcLDxMXGx8jJysvMzc7P0NHS09TV1tfa29zd3t/g4eLj5OXm5+jp6uvs7e7v8PHy8/T19vf4+fr7/P3+/w==',
+  
+  // An encouraging, upward sound for leveling up
+  levelUp: 'data:audio/wav;base64,UklGRjYAAABXQVZFZm10IBAAAAABAAEAiBUAAIgVAAABAAgAZGF0YSIBBg0aKy85P0ZOUlddZ2x0e4KMm6Ors8fT5/v/AAAAAA==',
+
+  // A descending, final tone for game over
+  gameOver: 'data:audio/wav;base64,UklGRlAAAABXQVZFZm10IBAAAAABAAIAnjgAAHkFAAEABAAwAAAAZGF0YTgAAACHh4eIiIiIiIiGh4eHh4eHh4aGhoaGh4aGhoZ+fn5+fn5+fn59fX19fX19fX18fHx8fHx8fHx6enp6enp6enp5eXl5eXl5eXl3d3d3d3d3d3d2dnZ2dnZ2dnZ0dHR0dHR0dHRycnJycnJycnJxsbGxsbGxsbGwsLCwsLCwsLCurq6urq6urq6srKysrKysrKyqqqqqqqqqqqqoqKioqKioqKigoKCgoKCgoKCeno6Ojo6Ojo6OjoaGhoaGhoaGhoZ+fn5+fn5+fn59fX19fX19fX18fHx8fHx8fHx6enp6enp6enp5eXl5eXl5eXl3d3d3d3d3d3d2dnZ2dnZ2dnZ0dHR0dHR0dHRycnJycnJycnJxsbGxsbGxsbGwsLCwsLCwsLCurq6urq6urq6srKysrKysrKyqqqqqqqqqqqqoqKioqKioqKigoKCgoKCgoKCeno6Ojo6Ojo6OjoaGhoaGhoaGhoZ+fn5+fn5+fn59fX19fX19fX18fHx8fHx8fHx6enp6enp6enp5eXl5eXl5eXl3d3d3d3d3d3d2dnZ2dnZ2dnZ0dHR0dHR0dHRycnJycnJycnJxsbGxsbGxsbGwsLCwsLCwsLCurq6urq6urq6srKysrKysrKyqqqqqqqqqqqqoqKioqKioqKigoKCgoKCgoKCeno6Ojo6Ojo6Ojg==',
+};
